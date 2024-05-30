@@ -22,15 +22,6 @@ from .copilots import (
     SendMessageResponse_BlockedResult,
 )
 from .document_catalog import DocumentMetadataPatch, DocumentMetadataPatchRequest, UploadDocumentResponse
-from .document_collections import (
-    CreateDocumentCollectionResponse,
-    DataType,
-    DistanceMetric,
-    IndexedDocument,
-    ListDocumentCollectionResponse,
-    MetadataField,
-    MetadataSchema,
-)
 from .environment import CredalApiEnvironment
 from .permissions_service import (
     Action,
@@ -61,23 +52,16 @@ __all__ = [
     "CheckBulkResourcesAuthorizationResponse",
     "CheckResourceAuthorizationResponse",
     "CreateConversationResponse",
-    "CreateDocumentCollectionResponse",
     "CredalApiEnvironment",
-    "DataType",
-    "DistanceMetric",
     "DocumentCollectionSearchOptions",
     "DocumentCollectionSearchResult",
     "DocumentMetadataPatch",
     "DocumentMetadataPatchRequest",
     "ExternalResourceId",
     "Group",
-    "IndexedDocument",
     "InsertedAuditLog",
-    "ListDocumentCollectionResponse",
     "MessageBlocked",
     "MessageReply",
-    "MetadataField",
-    "MetadataSchema",
     "Operator",
     "PolicyTrigger",
     "Principal",

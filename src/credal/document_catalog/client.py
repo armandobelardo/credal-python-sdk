@@ -4,7 +4,6 @@ import typing
 import urllib.parse
 from json.decoder import JSONDecodeError
 
-from .. import core
 from ..core.api_error import ApiError
 from ..core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ..core.jsonable_encoder import jsonable_encoder
@@ -22,97 +21,6 @@ OMIT = typing.cast(typing.Any, ...)
 class DocumentCatalogClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
-
-    def upload_document_url(
-        self,
-        *,
-        document_url: str,
-        upload_as_user_email: typing.Optional[str] = OMIT,
-        custom_metadata: typing.Optional[typing.Any] = OMIT,
-        collection_id: typing.Optional[str] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> UploadDocumentResponse:
-        """
-        Upload a document using its URL.
-
-        Parameters
-        ----------
-        document_url : str
-            The URL for the document you want to upload. Credal will automatically connect to source systems like Google Drive, Office 365, Confluence, etc. to fetch and upload the document contents.
-
-
-        upload_as_user_email : typing.Optional[str]
-            The user email to upload this document for. This user will be the owner of the document. User must be a collaborator on the API key.
-
-
-        custom_metadata : typing.Optional[typing.Any]
-            Optional JSON representing any custom metdata for this document
-
-
-        collection_id : typing.Optional[str]
-            If specified, document will also be added to a particular document collection
-
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        UploadDocumentResponse
-
-        Examples
-        --------
-        from credal.client import CredalApi
-
-        client = CredalApi(
-            api_key="YOUR_API_KEY",
-        )
-        client.document_catalog.upload_document_url(
-            document_url="https://docs.google.com/document/d/170NrBm0Do7gdzvr54UvyslPVWkQFOA0lgNycFmdZJQr",
-        )
-        """
-        _request: typing.Dict[str, typing.Any] = {"documentUrl": document_url}
-        if upload_as_user_email is not OMIT:
-            _request["uploadAsUserEmail"] = upload_as_user_email
-        if custom_metadata is not OMIT:
-            _request["customMetadata"] = custom_metadata
-        if collection_id is not OMIT:
-            _request["collectionId"] = collection_id
-        _response = self._client_wrapper.httpx_client.request(
-            method="POST",
-            url=urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "v0/catalog/uploadDocumentUrl"),
-            params=encode_query(
-                jsonable_encoder(
-                    request_options.get("additional_query_parameters") if request_options is not None else None
-                )
-            ),
-            json=jsonable_encoder(_request)
-            if request_options is None or request_options.get("additional_body_parameters") is None
-            else {
-                **jsonable_encoder(_request),
-                **(jsonable_encoder(remove_none_from_dict(request_options.get("additional_body_parameters", {})))),
-            },
-            headers=jsonable_encoder(
-                remove_none_from_dict(
-                    {
-                        **self._client_wrapper.get_headers(),
-                        **(request_options.get("additional_headers", {}) if request_options is not None else {}),
-                    }
-                )
-            ),
-            timeout=request_options.get("timeout_in_seconds")
-            if request_options is not None and request_options.get("timeout_in_seconds") is not None
-            else self._client_wrapper.get_timeout(),
-            retries=0,
-            max_retries=request_options.get("max_retries") if request_options is not None else 0,  # type: ignore
-        )
-        if 200 <= _response.status_code < 300:
-            return pydantic_v1.parse_obj_as(UploadDocumentResponse, _response.json())  # type: ignore
-        try:
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
 
     def upload_document_contents(
         self,
@@ -247,68 +155,6 @@ class DocumentCatalogClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
-    def upload_document_file(
-        self, *, document: core.File, request_options: typing.Optional[RequestOptions] = None
-    ) -> UploadDocumentResponse:
-        """
-        Parameters
-        ----------
-        document : core.File
-            See core.File for more documentation
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        UploadDocumentResponse
-
-        Examples
-        --------
-        from credal.client import CredalApi
-
-        client = CredalApi(
-            api_key="YOUR_API_KEY",
-        )
-        client.document_catalog.upload_document_file()
-        """
-        _response = self._client_wrapper.httpx_client.request(
-            method="POST",
-            url=urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "v0/catalog/uploadDocumentFile"),
-            params=encode_query(
-                jsonable_encoder(
-                    request_options.get("additional_query_parameters") if request_options is not None else None
-                )
-            ),
-            data=jsonable_encoder(remove_none_from_dict({}))
-            if request_options is None or request_options.get("additional_body_parameters") is None
-            else {
-                **jsonable_encoder(remove_none_from_dict({})),
-                **(jsonable_encoder(remove_none_from_dict(request_options.get("additional_body_parameters", {})))),
-            },
-            files=core.convert_file_dict_to_httpx_tuples(remove_none_from_dict({"document": document})),
-            headers=jsonable_encoder(
-                remove_none_from_dict(
-                    {
-                        **self._client_wrapper.get_headers(),
-                        **(request_options.get("additional_headers", {}) if request_options is not None else {}),
-                    }
-                )
-            ),
-            timeout=request_options.get("timeout_in_seconds")
-            if request_options is not None and request_options.get("timeout_in_seconds") is not None
-            else self._client_wrapper.get_timeout(),
-            retries=0,
-            max_retries=request_options.get("max_retries") if request_options is not None else 0,  # type: ignore
-        )
-        if 200 <= _response.status_code < 300:
-            return pydantic_v1.parse_obj_as(UploadDocumentResponse, _response.json())  # type: ignore
-        try:
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
     def metadata(
         self,
         *,
@@ -401,97 +247,6 @@ class DocumentCatalogClient:
 class AsyncDocumentCatalogClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
-
-    async def upload_document_url(
-        self,
-        *,
-        document_url: str,
-        upload_as_user_email: typing.Optional[str] = OMIT,
-        custom_metadata: typing.Optional[typing.Any] = OMIT,
-        collection_id: typing.Optional[str] = OMIT,
-        request_options: typing.Optional[RequestOptions] = None,
-    ) -> UploadDocumentResponse:
-        """
-        Upload a document using its URL.
-
-        Parameters
-        ----------
-        document_url : str
-            The URL for the document you want to upload. Credal will automatically connect to source systems like Google Drive, Office 365, Confluence, etc. to fetch and upload the document contents.
-
-
-        upload_as_user_email : typing.Optional[str]
-            The user email to upload this document for. This user will be the owner of the document. User must be a collaborator on the API key.
-
-
-        custom_metadata : typing.Optional[typing.Any]
-            Optional JSON representing any custom metdata for this document
-
-
-        collection_id : typing.Optional[str]
-            If specified, document will also be added to a particular document collection
-
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        UploadDocumentResponse
-
-        Examples
-        --------
-        from credal.client import AsyncCredalApi
-
-        client = AsyncCredalApi(
-            api_key="YOUR_API_KEY",
-        )
-        await client.document_catalog.upload_document_url(
-            document_url="https://docs.google.com/document/d/170NrBm0Do7gdzvr54UvyslPVWkQFOA0lgNycFmdZJQr",
-        )
-        """
-        _request: typing.Dict[str, typing.Any] = {"documentUrl": document_url}
-        if upload_as_user_email is not OMIT:
-            _request["uploadAsUserEmail"] = upload_as_user_email
-        if custom_metadata is not OMIT:
-            _request["customMetadata"] = custom_metadata
-        if collection_id is not OMIT:
-            _request["collectionId"] = collection_id
-        _response = await self._client_wrapper.httpx_client.request(
-            method="POST",
-            url=urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "v0/catalog/uploadDocumentUrl"),
-            params=encode_query(
-                jsonable_encoder(
-                    request_options.get("additional_query_parameters") if request_options is not None else None
-                )
-            ),
-            json=jsonable_encoder(_request)
-            if request_options is None or request_options.get("additional_body_parameters") is None
-            else {
-                **jsonable_encoder(_request),
-                **(jsonable_encoder(remove_none_from_dict(request_options.get("additional_body_parameters", {})))),
-            },
-            headers=jsonable_encoder(
-                remove_none_from_dict(
-                    {
-                        **self._client_wrapper.get_headers(),
-                        **(request_options.get("additional_headers", {}) if request_options is not None else {}),
-                    }
-                )
-            ),
-            timeout=request_options.get("timeout_in_seconds")
-            if request_options is not None and request_options.get("timeout_in_seconds") is not None
-            else self._client_wrapper.get_timeout(),
-            retries=0,
-            max_retries=request_options.get("max_retries") if request_options is not None else 0,  # type: ignore
-        )
-        if 200 <= _response.status_code < 300:
-            return pydantic_v1.parse_obj_as(UploadDocumentResponse, _response.json())  # type: ignore
-        try:
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
 
     async def upload_document_contents(
         self,
@@ -604,68 +359,6 @@ class AsyncDocumentCatalogClient:
                 **jsonable_encoder(_request),
                 **(jsonable_encoder(remove_none_from_dict(request_options.get("additional_body_parameters", {})))),
             },
-            headers=jsonable_encoder(
-                remove_none_from_dict(
-                    {
-                        **self._client_wrapper.get_headers(),
-                        **(request_options.get("additional_headers", {}) if request_options is not None else {}),
-                    }
-                )
-            ),
-            timeout=request_options.get("timeout_in_seconds")
-            if request_options is not None and request_options.get("timeout_in_seconds") is not None
-            else self._client_wrapper.get_timeout(),
-            retries=0,
-            max_retries=request_options.get("max_retries") if request_options is not None else 0,  # type: ignore
-        )
-        if 200 <= _response.status_code < 300:
-            return pydantic_v1.parse_obj_as(UploadDocumentResponse, _response.json())  # type: ignore
-        try:
-            _response_json = _response.json()
-        except JSONDecodeError:
-            raise ApiError(status_code=_response.status_code, body=_response.text)
-        raise ApiError(status_code=_response.status_code, body=_response_json)
-
-    async def upload_document_file(
-        self, *, document: core.File, request_options: typing.Optional[RequestOptions] = None
-    ) -> UploadDocumentResponse:
-        """
-        Parameters
-        ----------
-        document : core.File
-            See core.File for more documentation
-
-        request_options : typing.Optional[RequestOptions]
-            Request-specific configuration.
-
-        Returns
-        -------
-        UploadDocumentResponse
-
-        Examples
-        --------
-        from credal.client import AsyncCredalApi
-
-        client = AsyncCredalApi(
-            api_key="YOUR_API_KEY",
-        )
-        await client.document_catalog.upload_document_file()
-        """
-        _response = await self._client_wrapper.httpx_client.request(
-            method="POST",
-            url=urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "v0/catalog/uploadDocumentFile"),
-            params=encode_query(
-                jsonable_encoder(
-                    request_options.get("additional_query_parameters") if request_options is not None else None
-                )
-            ),
-            data=jsonable_encoder(remove_none_from_dict({}))
-            if request_options is None or request_options.get("additional_body_parameters") is None
-            else {
-                **jsonable_encoder(remove_none_from_dict({})),
-                **(jsonable_encoder(remove_none_from_dict(request_options.get("additional_body_parameters", {})))),
-            },
-            files=core.convert_file_dict_to_httpx_tuples(remove_none_from_dict({"document": document})),
             headers=jsonable_encoder(
                 remove_none_from_dict(
                     {

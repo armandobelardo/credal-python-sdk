@@ -7,9 +7,12 @@ import uuid
 from ...core.datetime_utils import serialize_datetime
 from ...core.pydantic_utilities import deep_union_pydantic_dicts, pydantic_v1
 from .document_collection_search_result import DocumentCollectionSearchResult
+from .single_field_filter import SingleFieldFilter
 
 
 class SearchDocumentCollectionResponse(pydantic_v1.BaseModel):
+    search_terms_used: typing.List[str] = pydantic_v1.Field(alias="searchTermsUsed")
+    structured_filters_applied: typing.List[SingleFieldFilter] = pydantic_v1.Field(alias="structuredFiltersApplied")
     search_id: uuid.UUID = pydantic_v1.Field(alias="searchId")
     results: typing.List[DocumentCollectionSearchResult]
 
